@@ -10,5 +10,5 @@ FROM alpine
 RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 COPY --from=build-env /go/src/github.com/ichsanrp/tax-calculator/app .
-CMD ["./app"]  
+CMD ["./app"]
 EXPOSE 8080
