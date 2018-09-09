@@ -1,24 +1,28 @@
 package main
 
 import (
-    "fmt"
-    "github.com/julienschmidt/httprouter"
-    "net/http"
-    "log"
+	"log"
+	"net/http"
+
+	"github.com/TV4/graceful"
+	calculator "github.com/ichsanrp/tax-calculator/src/taxCalculator"
+	"github.com/julienschmidt/httprouter"
 )
 
-func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-    fmt.Fprint(w, "Welcome!\n")
-}
-
-func Hello(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-    fmt.Fprintf(w, "hello, %s!\n", ps.ByName("name"))
-}
-
 func main() {
-    router := httprouter.New()
-    router.GET("/", Index)
-    router.GET("/hello/:name", Hello)
+	var err error
+	router := httprouter.New()
 
-    log.Fatal(http.ListenAndServe(":8080", router))
+	_, err = calculator.Init(router)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	router.ServeFiles("/*filepath", http.Dir("public"))
+
+	graceful.LogListenAndServe(&http.Server{
+		Addr:    ":8080",
+		Handler: router,
+	})
 }

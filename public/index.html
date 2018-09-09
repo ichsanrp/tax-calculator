@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tax Calculator</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"> </script>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="col-md-9 col-md-push-3"></div>
+    <div class="col-md-3 col-md-pull-5">
+        <h1>Tax Calculator</h1>
+        <form>
+            <button type="button" class="btn btn-default" id="new_session">New Session</button>
+            <div class="form-group">
+                <label for="name">Product Name</label>
+                <input type="text" class="form-control" id="name" placeholder="name" disabled>
+            </div>
+            <div class="form-group">
+                <label for="Price">Tax Code</label>
+                <input type="number" class="form-control" id="tax_code" disabled>
+            </div>
+            <div class="form-group">
+                <label for="Price">Price</label>
+                <input type="number" min="1" max="3" class="form-control" id="price" disabled>
+            </div>
+            <input type="number" class="form-control" id="item-id" style="display:none">
+            <button type="button" class="btn btn-default" id="update_item" disabled style="display:none">Save</button>
+            <button type="button" class="btn btn-default" id="add_item" disabled>Add</button>
+            <button type="button" class="btn btn-default" id="delete" disabled>delete</button>
+        </form>
+    </div>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Product Name</th>
+                <th>Price</th>
+                <th>Tax Code</th>
+                <th>Tax</th>
+            </tr>
+        </thead>
+        <tbody id="dataview">
+            
+        </tbody>
+    </table>
+
+    <script>
+        var session;
+        var selectedItemElement;
+
+        function createSession(done){
+            $.post( "session", function( response ) {
+                session = response.data;
+                done(session);
+            });
+        }
+
+        function getItemFromInput(){
+            var item = {};
+            item.name = $("#name").val();
+            item.tax_code = $("#tax_code").val();
+            item.price = $("#price").val();
+            item.id = $("#item-id").val();
+            return item;
+        }
+
+        function addItem(item, done, fail){
+            $.post( "item", { name: item.name, price: item.price , tax_code : item.tax_code, session_id:session.id}, function( response ) {
+                if (response.header.status_code == 200){
+                    done(response.data);
+                }else{
+                    fail(response.header.error)
+                }
+            });
+        }
+
+        function updateItem(item, done, fail){
+            $.ajax({
+                url: "item",
+                type: 'PUT',
+                success: function(response){
+                    if (response.header.status_code == 200){
+                        done(response.data);
+                    }else{
+                        fail(response.header.error)
+                    }
+                },
+                data: { id:item.id, name: item.name, price: item.price , tax_code : item.tax_code, session_id:session.id}
+            });
+        }
+
+        function deleteItem(item, done, fail){
+            $.ajax({
+                url: "item?" + $.param({ id:item.id, name: item.name, price: item.price , tax_code : item.tax_code, session_id:session.id}),
+                type: 'DELETE',
+                success: function(response){
+                    if (response.header.status_code == 200){
+                        done(response.data);
+                    }else{
+                        fail(response.header.error)
+                    }
+                }
+            });
+        }
+
+        function setInputForm(action, item){
+            if (action == "edit"){
+                $("#name").val(item.name);
+                $("#tax_code").val(item.tax_code);
+                $("#price").val(item.price);
+                $("#item-id").val(item.id);
+                $("#delete").prop("disabled", false);
+                $("#update_item").prop("disabled", false).css("display","inline-block");
+            }else{
+                $("#delete").prop("disabled", true);
+                $("#update_item").prop("disabled", true).css("display","none");
+                $("#add_item").html("add");
+            }
+        }
+
+        function clearDataview(){
+            $("#dataview").empty();
+        }
+
+        function addItemView(item){
+            $("#dataview").append(
+                $(`
+                    <tr>
+                        <td class="name">`+item.name+`</td>
+                        <td class="price">`+item.price+`</td>
+                        <td class="tax_code">`+item.tax_code+`</td>
+                        <td class="tax">`+item.tax+`</td>
+                    </tr>
+                `)
+                .data("item", item)
+                .click(function(){
+                    var selectedItem = $(this).data("item");
+                    selectedItemElement = $(this);
+                    setInputForm("edit", selectedItem)
+                })
+            );
+        }
+
+        $(document).ready(function(){            
+            $("#add_item").click(function(){
+                var item = getItemFromInput();
+                addItem(item, function(data){
+                    addItemView(data);
+                })
+            })
+
+            $("#update_item").click(function(){
+                var item = getItemFromInput();
+                updateItem(item, function(data){
+                    selectedItemElement.find(".name").html(data.name);
+                    selectedItemElement.find(".price").html(data.price);
+                    selectedItemElement.find(".tax_code").html(data.tax_code);
+                    selectedItemElement.find(".tax").html(data.tax);
+                })
+            })
+
+            $("#delete").click(function(){
+                var item = getItemFromInput();
+                deleteItem(item, function(data){
+                    selectedItemElement.remove();
+                })
+            })
+
+            $("#new_session").click(function(){
+                createSession(function(session){
+                    $("#name").prop("disabled", false);
+                    $("#tax_code").prop("disabled", false);
+                    $("#price").prop("disabled", false);
+                    $("#add_item").prop("disabled", false);
+
+                    $("#name").val("");
+                    $("#tax_code").val(1);
+                    $("#price").val(0);
+                    
+                    clearDataview();
+                });
+            })
+        })
+
+    </script>
+</body>
+</html> 
