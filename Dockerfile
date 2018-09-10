@@ -3,6 +3,7 @@ FROM golang AS build-env
 WORKDIR /go/src/github.com/ichsanrp/tax-calculator
 COPY . /go/src/github.com/ichsanrp/tax-calculator
 RUN go get -u
+# Testing Apps
 RUN go get -d -v gopkg.in/DATA-DOG/go-sqlmock.v1
 RUN go test ./...
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o app .

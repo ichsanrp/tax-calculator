@@ -57,6 +57,7 @@ func (m *TaxCalculator) prepareTable() (err error) {
 	return
 }
 
+// prepareStatement is where we define all SQL operation for use in tax calculator module
 func (m *TaxCalculator) prepareStatement() (err error) {
 	var q string
 

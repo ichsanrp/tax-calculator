@@ -1,4 +1,4 @@
-// Model is where you should keep your data model, the algorithms.
+// Model Unit test, we use sql mock to validate right query executed through database
 package taxCalculator
 
 import (
@@ -306,6 +306,95 @@ func TestTaxCalculator_updateItem(t *testing.T) {
 			}
 			if err := calculateTaxModule.updateItem(tt.args.item); (err != nil) != tt.wantErr {
 				t.Errorf("TaxCalculator.updateItem() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestTaxCalculator_getItemsBySession(t *testing.T) {
+	mock := resetMock()
+	type args struct {
+		sessionID int
+	}
+
+	data := []*Item{
+		&Item{
+			ID:        1,
+			Name:      "pizza",
+			Price:     100,
+			TaxCodeID: 1,
+			Tax:       10,
+			SessionID: 1,
+		},
+		&Item{
+			ID:        1,
+			Name:      "malboro",
+			Price:     100,
+			TaxCodeID: 2,
+			Tax:       22,
+			SessionID: 1,
+		},
+		&Item{
+			ID:        1,
+			Name:      "movie ticket",
+			Price:     200,
+			TaxCodeID: 3,
+			Tax:       1,
+			SessionID: 1,
+		},
+		&Item{
+			ID:        1,
+			Name:      "Club ticket",
+			Price:     200,
+			TaxCodeID: 3,
+			SessionID: 1,
+			Tax:       1,
+		},
+	}
+
+	for _, item := range data {
+		rows := sqlmock.NewRows([]string{"id"}).AddRow(1)
+		mock.ExpectBegin()
+		mock.ExpectExec("INSERT INTO tax_calculator.item").WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectQuery("SELECT LAST_INSERT_ID()").WillReturnRows(rows)
+		mock.ExpectCommit()
+		calculateTaxModule.addItem(item)
+	}
+
+	tests := []struct {
+		name      string
+		args      args
+		wantItems []*Item
+		wantErr   bool
+	}{
+		{
+			name: "test 1",
+			args: args{
+				sessionID: 1,
+			},
+			wantItems: data,
+			wantErr:   false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rows := sqlmock.NewRows([]string{"id", "name", "price", "tax", "tax_code"})
+			for _, item := range tt.wantItems {
+				rows.AddRow(item.ID, item.Name, item.Price, item.Tax, item.TaxCodeID)
+			}
+
+			mock.ExpectQuery("SELECT id, name, price, tax, tax_code FROM tax_calculator.item").WillReturnRows(rows)
+
+			gotItems, err := calculateTaxModule.getItemsBySession(tt.args.sessionID)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TaxCalculator.getItemsBySession() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			for k, item := range gotItems {
+				if !reflect.DeepEqual(item, tt.wantItems[k]) {
+					t.Errorf("TaxCalculator.getItemsBySession() = %v, want %v", item, tt.wantItems[k])
+				}
 			}
 		})
 	}

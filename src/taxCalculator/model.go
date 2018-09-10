@@ -136,13 +136,13 @@ func (m *TaxCalculator) updateItem(item *Item) (err error) {
 }
 
 // getItemsBySession is function to get all item based on session information given
-func (m *TaxCalculator) getItemsBySession(session_id int) (items []*Item, err error) {
-	if session_id == 0 {
+func (m *TaxCalculator) getItemsBySession(sessionID int) (items []*Item, err error) {
+	if sessionID == 0 {
 		return nil, errParameterNotSatisfied
 	}
 
 	items = make([]*Item, 0)
-	rows, err := m.getitemBySessionStatement.Query(session_id)
+	rows, err := m.getitemBySessionStatement.Query(sessionID)
 	if err != nil {
 		return
 	}
@@ -155,6 +155,7 @@ func (m *TaxCalculator) getItemsBySession(session_id int) (items []*Item, err er
 			log.Println("[getItemsBySession]", err)
 			continue
 		}
+		item.SessionID = sessionID
 		items = append(items, item)
 	}
 

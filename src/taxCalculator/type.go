@@ -1,3 +1,4 @@
+// Collection of object struct. we use this object to Marshal/Unmarshal beetween DB, Golang App, and API HTTP Response
 package taxCalculator
 
 import (

@@ -1,3 +1,5 @@
+// Controller is where we put API http handler and direct incoming http request to right route.
+// in controller we bind logic in model and return it to client by constructing http response
 package taxCalculator
 
 import (

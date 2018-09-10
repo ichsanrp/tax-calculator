@@ -39,6 +39,7 @@ func Init(router *httprouter.Router) (module *TaxCalculator, err error) {
 	return
 }
 
+// initDB will create new connection to database via mysql driver
 func (m *TaxCalculator) initDB() (err error) {
 	m.db, err = sql.Open("mysql", "root:rahasia@tcp(mysql)/")
 	return
