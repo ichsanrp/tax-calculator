@@ -35,5 +35,12 @@ Project Structure
 
 to develop new feature please create http handler in controller and create new business logic in model. for handling db operation please prepare any db query ini statement.go
 
+### Database Design
+![ERD Diagram](https://github.com/ichsanrp/tax-calculator/blob/master/ERD.png "Tax Calculator ERD")
+
+Tax calculator had two table item and session. Session table will store session that created for each calculation, one session will be have multiple item since item will be stored based on session. In every New Calculation we create new session.
+
+Item table is used to store item information for each session. tax will be calculated in server and stored here so any changes in tax calculation will be done in business logic model and old calculation will remain same.
+
 ## documentation
 For API documentation could be found [here](https://documenter.getpostman.com/view/4946571/RWaGVVmS)
