@@ -13,13 +13,15 @@ func main() {
 	var err error
 	router := httprouter.New()
 
+	router.GET("/", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		http.ServeFile(w, r, "public/index.html")
+	})
+
 	_, err = calculator.Init(router)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-
-	router.ServeFiles("/*filepath", http.Dir("public"))
 
 	graceful.LogListenAndServe(&http.Server{
 		Addr:    ":8080",

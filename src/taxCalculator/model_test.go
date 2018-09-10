@@ -2,24 +2,19 @@
 package taxCalculator
 
 import (
-	"database/sql"
 	"log"
 	"os"
 	"reflect"
 	"testing"
 	"time"
 
-	_ "github.com/proullon/ramsql/driver"
 	sqlmock "gopkg.in/DATA-DOG/go-sqlmock.v1"
 )
 
 var calculateTaxModule *TaxCalculator
-var mock sqlmock.Sqlmock
 
-func TestMain(m *testing.M) {
-	var err error
-	var db *sql.DB
-	db, mock, err = sqlmock.New()
+func resetMock() sqlmock.Sqlmock {
+	db, mock, err := sqlmock.New()
 	if err != nil {
 		log.Println(err)
 	}
@@ -35,16 +30,23 @@ func TestMain(m *testing.M) {
 	mock.ExpectPrepare("UPDATE tax_calculator.item")
 	mock.ExpectPrepare("DELETE FROM tax_calculator.item")
 
-	//creating module
-	calculateTaxModule = &TaxCalculator{}
 	calculateTaxModule.db = db
 	calculateTaxModule.initStatement()
+
+	return mock
+}
+
+func TestMain(m *testing.M) {
+	//creating module
+	calculateTaxModule = &TaxCalculator{}
 
 	// call flag.Parse() here if TestMain uses flags
 	os.Exit(m.Run())
 }
 
 func TestTaxCalculator_createSession(t *testing.T) {
+	mock := resetMock()
+
 	tests := []struct {
 		name        string
 		wantSession *Session
@@ -86,6 +88,8 @@ func TestTaxCalculator_createSession(t *testing.T) {
 }
 
 func TestTaxCalculator_addItem(t *testing.T) {
+	mock := resetMock()
+
 	type args struct {
 		item *Item
 	}
@@ -103,6 +107,7 @@ func TestTaxCalculator_addItem(t *testing.T) {
 				Price:     100,
 				TaxCodeID: 1,
 				Tax:       10,
+				SessionID: 1,
 			},
 			args: args{
 				item: &Item{
@@ -110,6 +115,7 @@ func TestTaxCalculator_addItem(t *testing.T) {
 					Name:      "pizza",
 					Price:     100,
 					TaxCodeID: 1,
+					SessionID: 1,
 				},
 			},
 			wantErr: false,
@@ -122,6 +128,7 @@ func TestTaxCalculator_addItem(t *testing.T) {
 				Price:     100,
 				TaxCodeID: 2,
 				Tax:       22,
+				SessionID: 1,
 			},
 			args: args{
 				item: &Item{
@@ -129,6 +136,7 @@ func TestTaxCalculator_addItem(t *testing.T) {
 					Name:      "malboro",
 					Price:     100,
 					TaxCodeID: 2,
+					SessionID: 1,
 				},
 			},
 			wantErr: false,
@@ -141,6 +149,7 @@ func TestTaxCalculator_addItem(t *testing.T) {
 				Price:     100,
 				TaxCodeID: 3,
 				Tax:       0,
+				SessionID: 1,
 			},
 			args: args{
 				item: &Item{
@@ -148,6 +157,7 @@ func TestTaxCalculator_addItem(t *testing.T) {
 					Name:      "movie ticket",
 					Price:     100,
 					TaxCodeID: 3,
+					SessionID: 1,
 				},
 			},
 			wantErr: false,
@@ -160,7 +170,21 @@ func TestTaxCalculator_addItem(t *testing.T) {
 				Price:     200,
 				TaxCodeID: 3,
 				Tax:       1,
+				SessionID: 1,
 			},
+			args: args{
+				item: &Item{
+					ID:        1,
+					Name:      "movie ticket",
+					Price:     200,
+					TaxCodeID: 3,
+					SessionID: 1,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "club ticket",
 			args: args{
 				item: &Item{
 					ID:        1,
@@ -169,7 +193,7 @@ func TestTaxCalculator_addItem(t *testing.T) {
 					TaxCodeID: 3,
 				},
 			},
-			wantErr: false,
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -197,6 +221,7 @@ func TestTaxCalculator_addItem(t *testing.T) {
 }
 
 func TestTaxCalculator_deleteItem(t *testing.T) {
+	mock := resetMock()
 
 	type args struct {
 		item *Item
@@ -247,6 +272,7 @@ func TestTaxCalculator_deleteItem(t *testing.T) {
 }
 
 func TestTaxCalculator_updateItem(t *testing.T) {
+	mock := resetMock()
 
 	type args struct {
 		item *Item

@@ -40,6 +40,6 @@ func Init(router *httprouter.Router) (module *TaxCalculator, err error) {
 }
 
 func (m *TaxCalculator) initDB() (err error) {
-	m.db, err = sql.Open("mysql", "root:rahasia@tcp(172.18.0.2)/")
+	m.db, err = sql.Open("mysql", "root:rahasia@tcp(mysql)/")
 	return
 }

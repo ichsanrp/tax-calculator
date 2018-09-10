@@ -82,11 +82,11 @@ func (m *TaxCalculator) createSessionHandler(w http.ResponseWriter, r *http.Requ
 		w.WriteHeader(http.StatusInternalServerError)
 		response.Header.StatusCode = http.StatusInternalServerError
 		response.Header.Error = err.Error()
-		return
+	} else {
+		response.Header.StatusCode = http.StatusOK
 	}
 
 	response.Data = session
-	response.Header.StatusCode = http.StatusOK
 	b, _ := json.Marshal(response)
 
 	w.Header().Set("Content-Type", "Application/json")
@@ -101,6 +101,7 @@ func (m *TaxCalculator) addItemHandler(w http.ResponseWriter, r *http.Request, p
 	item := parseItemFromRequest(r)
 	newItem, err := m.addItem(item)
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		response.Header.StatusCode = http.StatusInternalServerError
 		response.Header.Error = err.Error()
 	} else {
@@ -122,6 +123,7 @@ func (m *TaxCalculator) removeItemHandler(w http.ResponseWriter, r *http.Request
 	item := parseItemFromRequest(r)
 	err := m.deleteItem(item)
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		response.Header.StatusCode = http.StatusInternalServerError
 		response.Header.Error = err.Error()
 	} else {
@@ -143,6 +145,7 @@ func (m *TaxCalculator) updateItemHandler(w http.ResponseWriter, r *http.Request
 	item := parseItemFromRequest(r)
 	err := m.updateItem(item)
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		response.Header.StatusCode = http.StatusInternalServerError
 		response.Header.Error = err.Error()
 	} else {

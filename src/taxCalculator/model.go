@@ -39,10 +39,15 @@ func (m *TaxCalculator) createSession() (session *Session, err error) {
 
 // addItem is function to create an item in database and doing tax calculation before item saved to database
 func (m *TaxCalculator) addItem(item *Item) (newitem *Item, err error) {
+	if item.SessionID == 0 {
+		err = errParameterNotSatisfied
+		return
+	}
 	newitem = &Item{
 		Name:      item.Name,
 		Price:     item.Price,
 		TaxCodeID: item.TaxCodeID,
+		SessionID: item.SessionID,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
@@ -77,6 +82,7 @@ func (m *TaxCalculator) deleteItem(item *Item) (err error) {
 	defer cancel()
 	tx, err := m.db.BeginTx(ctx, nil)
 	defer func() {
+		log.Println(err)
 		if err != nil {
 			err = tx.Rollback()
 		} else {
@@ -175,8 +181,11 @@ func (m *TaxCalculator) getAllSession(page, perPage int) (sessions []*Session, e
 
 	defer rows.Close()
 	for rows.Next() {
+		var t string
 		session := &Session{}
-		err = rows.Scan(&session.ID, &session.CreateTime)
+		err = rows.Scan(&session.ID, &t)
+		ctime, _ := time.Parse("2006-01-02 15:04:05", t)
+		session.CreateTime = ctime
 		if err != nil {
 			log.Println("[getAllSession]", err)
 			continue

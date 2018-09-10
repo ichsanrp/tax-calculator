@@ -61,7 +61,7 @@ func (m *TaxCalculator) prepareStatement() (err error) {
 	var q string
 
 	// table session Operation
-	q = `SELECT id, created_time FROM tax_calculator.session ORDER BY id DESC OFFSET ? LIMIT ?`
+	q = `SELECT id, created_time FROM tax_calculator.session ORDER BY created_time DESC LIMIT ?, ?`
 	m.getAllSessionStatement, err = m.db.Prepare(q)
 	if err != nil {
 		log.Fatalln("[STATEMENT ERR] getAllSessionStatement ", err)
